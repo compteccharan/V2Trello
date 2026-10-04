@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Turn natural language into safe Trello actions.">
+  <title>Voice-to-Trello AI</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div><p class="eyebrow">AI task workspace</p><h1>Voice-to-Trello AI</h1><p>Speak naturally. Turn your words into organized Trello actions.</p></div>
+    <span id="modeBadge" class="badge">Checking mode...</span>
+  </header>
+  <main class="layout">
+    <section class="panel command-panel">
+      <div class="section-heading"><div><p class="eyebrow">01 · Command</p><h2>What needs to happen?</h2></div><span id="voiceStatus" class="muted">Ready</span></div>
+      <label for="commandInput">Your command</label>
+      <textarea id="commandInput" maxlength="1200" placeholder="Finish the DBMS assignment tomorrow and put it in College Tasks."></textarea>
+      <div class="button-row"><button id="speakButton" class="secondary">🎙 Record voice</button><button id="stopButton" class="secondary" disabled>Stop recording</button><button id="processButton" class="primary">Process command</button></div>
+      <p id="speechHelp" class="hint">Click Record voice, allow microphone access, then speak. Groq Whisper will transcribe your recording into the editable command box.</p>
+      <div class="examples"><strong>Try an example</strong><button class="example">Finish the DBMS assignment tomorrow and put it in College Tasks.</button><button class="example">Move the DBMS presentation to Doing.</button><button class="example">Assign the project presentation to Arun.</button></div>
+    </section>
+    <section class="panel">
+      <p class="eyebrow">02 · Transcript</p><h2>Editable transcript</h2><p id="transcript" class="transcript" aria-live="polite">Your typed or spoken command will appear here.</p><p id="captureStatus" class="capture-status">Nothing captured yet.</p>
+    </section>
+    <section id="interpretationPanel" class="panel hidden">
+      <p class="eyebrow">03 · Interpretation</p><h2>Review the structured action</h2><div id="interpretation" class="details"></div>
+    </section>
+    <section id="previewPanel" class="panel preview hidden">
+      <p class="eyebrow">04 · Confirmation</p><h2>Nothing changes until you confirm</h2><p id="previewText"></p><div class="button-row"><button id="cancelButton" class="secondary">Cancel</button><button id="confirmButton" class="primary">Confirm action</button></div>
+    </section>
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
