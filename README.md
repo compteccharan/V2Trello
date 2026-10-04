@@ -53,7 +53,11 @@ The default provider is Groq's OpenAI-compatible API. The command parser uses `o
 
 Voice transcription uses the browser `MediaRecorder` API to capture audio and the server-side Groq `whisper-large-v3` model to produce text. Microphone access usually works over localhost or HTTPS. If unavailable or not configured, type the command; typed input is the complete MVP path.
 
-Logging: set `LOG_LEVEL=debug` in your `.env` to see verbose server logs (timestamps and lifecycle events). The frontend prints progress and errors to the browser console.
+Logging: set `LOG_LEVEL=debug` in your `.env` to see verbose server logs (timestamps, request timing, and lifecycle events). The frontend prints progress and errors to the browser console. If the frontend is hosted on a different domain, set `FRONTEND_ORIGINS` to a comma-separated list of allowed origins, such as `https://v2trello.charancodes.me`.
+
+### Vercel deployment
+
+The Express app is exported for Vercel's serverless runtime. It only calls `app.listen()` when started directly with `npm start`, so local development and Vercel deployment use the same backend code without a legacy long-running server listener. Add the environment variables from `.env.example` in Vercel Project Settings, then redeploy after changing them.
 
 ## Example commands
 

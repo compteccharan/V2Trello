@@ -22,6 +22,10 @@ const app = express();
 const port = Number(process.env.PORT) || 3000;
 const allowedActions = ["create_card", "update_card", "move_card", "assign_member", "set_due_date"];
 const maxAudioSize = 19.5 * 1024 * 1024;
+const allowedOrigins = (process.env.FRONTEND_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 const uploadAudio = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: maxAudioSize }
@@ -29,6 +33,26 @@ const uploadAudio = multer({
 const maxCommandLength = 1200;
 
 app.use(express.json({ limit: "20kb" }));
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  }
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  res.on("finish", () => {
+    log("info", "request completed", {
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      durationMs: Date.now() - startedAt
+    });
+  });
+  next();
+});
 app.use(express.static(path.join(__dirname, "public")));
 log('info', 'Express static and JSON middleware configured');
 
@@ -317,7 +341,12 @@ app.get("/api/status", (req, res) => {
 });
 
 app.get("/api/context", async (req, res) => {
-  try { res.json(await getTrelloContext()); } catch (error) { res.status(502).json({ error: error.message }); }
+  try {
+    res.json(await getTrelloContext());
+  } catch (error) {
+    log("error", "context lookup failed", error.message);
+    res.status(502).json({ error: error.message });
+  }
 });
 
 app.post("/api/interpret", async (req, res) => {
@@ -355,4 +384,27 @@ app.post("/api/execute", async (req, res) => {
 });
 
 app.get("*", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-app.listen(port, () => log('info', `Voice-to-Trello AI running at http://localhost:${port}`));
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  const isUploadLimit = error.code === "LIMIT_FILE_SIZE";
+  const status = isUploadLimit ? 413 : error.statusCode || error.status || 500;
+  const message = isUploadLimit
+    ? "Audio file is too large. Please record a shorter voice command."
+    : status >= 500
+      ? "The server could not complete the request."
+      : error.message;
+  log("error", "unhandled request error", {
+    method: req.method,
+    path: req.path,
+    status,
+    message: error.message
+  });
+  res.status(status).json({ error: message });
+});
+
+module.exports = app;
+
+if (require.main === module) {
+  app.listen(port, () => log('info', `Voice-to-Trello AI running at http://localhost:${port}`));
+}
